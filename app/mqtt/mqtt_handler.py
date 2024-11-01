@@ -1,5 +1,3 @@
-# mqtthandler.py
-
 import paho.mqtt.client as mqtt
 from sqlalchemy.orm import Session
 from app.database.db import get_db
@@ -10,7 +8,7 @@ mqtt_client = mqtt.Client()
 
 def __write_to_db(device_id: str, weight: float, db: Session):
     """
-    Function to write the received MQTT data to the database.
+    Writes the received MQTT data to the database.
     """
     from app.database.models import SensorData
     sensor_data = SensorData(sensor_id=device_id, data=weight)
@@ -26,9 +24,7 @@ def __on_message(client, userdata, msg):
         device_id, data_type, value = message.split("|")
         if data_type == "weight":
             weight = float(value)
-            print(f"Received weight `{weight}` for device `{device_id}` on topic `{msg.topic}`")
-
-            # Write to the database using a session from get_db
+            print(f"Received weight `{weight}` for device `{device_id}` on topic `{msg.topic}`") # Write to the database using a session from get_db
             with get_db() as session:
                 __write_to_db(device_id, weight, session)
             print(f"Data written to database for device `{device_id}`")
@@ -42,7 +38,7 @@ def __on_message(client, userdata, msg):
 
 def run_mqtt_client():
     """
-    Function to initialize the MQTT client, connect to the broker, and subscribe to topics.
+    Initializes the MQTT client, connects to the broker, and subscribes to topics.
     """
     broker = MQTT_BROKER_URL
     port = MQTT_BROKER_PORT
@@ -62,4 +58,19 @@ def run_mqtt_client():
 
 # Function to publish messages to an MQTT topic
 def publish_message(topic: str, message: str):
-    mqtt_client.publish(topic, message)
+    """
+    Publishes a message to a specific topic using QoS 1.
+    """
+    mqtt_client.publish(topic, message, qos=1)
+
+# Explanation for using QoS 2:
+'''
+In MQTT, QoS 2 guarantees that each message is delivered exactly once. 
+This is critical for cases where message duplication must be avoided, 
+such as when sending sensor data or other important updates. By using 
+QoS 2 in receive_data_once, we ensure the MQTT broker will keep trying 
+to deliver the message until it is confirmed by the client, which is 
+ideal for applications that require high data reliability.
+
+More details: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels/
+'''
