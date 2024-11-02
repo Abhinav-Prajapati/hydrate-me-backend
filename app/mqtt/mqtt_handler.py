@@ -1,10 +1,10 @@
 import paho.mqtt.client as mqtt
 from sqlalchemy.orm import Session
 from app.database.db import get_db
-from app.mqtt.config import MQTT_BROKER_URL, MQTT_BROKER_PORT
+from app.mqtt.config import MQTT_BROKER_URL, MQTT_BROKER_PORT, MQTT_BROKER_USER_PASSWORD, MQTT_BROKER_USER
 
-# MQTT client instance
 mqtt_client = mqtt.Client()
+mqtt_client.username_pw_set(MQTT_BROKER_USER,MQTT_BROKER_USER_PASSWORD)
 
 def __write_to_db(device_id: str, weight: float, db: Session):
     """
@@ -44,26 +44,20 @@ def run_mqtt_client():
     port = MQTT_BROKER_PORT
     topic_subscribe = "/weight_change"
 
-    # Set up the callback for receiving messages
     mqtt_client.on_message = __on_message
 
-    # Connect to the broker
     mqtt_client.connect(broker, port)
 
-    # Subscribe to the topic
     mqtt_client.subscribe(topic_subscribe, qos=1)
 
-    # Start the MQTT client loop in a separate thread
     mqtt_client.loop_start()
 
-# Function to publish messages to an MQTT topic
 def publish_message(topic: str, message: str):
     """
     Publishes a message to a specific topic using QoS 1.
     """
     mqtt_client.publish(topic, message, qos=1)
 
-# Explanation for using QoS 2:
 '''
 In MQTT, QoS 2 guarantees that each message is delivered exactly once. 
 This is critical for cases where message duplication must be avoided, 

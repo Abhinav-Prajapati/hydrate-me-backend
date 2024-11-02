@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 router = APIRouter()
 
 # FastAPI route to publish LED mode to the /ledmode topic
-@router.post("/ledmode")
+@router.post("/set_led_mode")
 async def set_led_mode(led_mode: str, user = Depends(get_current_user), db: Session = Depends(get_db_session)):
     """
     FastAPI route to set the LED mode by publishing to the /ledmode topic.
